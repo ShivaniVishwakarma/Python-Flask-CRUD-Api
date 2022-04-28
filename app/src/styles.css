@@ -1,0 +1,27 @@
+table {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+}
+
+th,
+td {
+  padding: 0.75rem;
+  vertical-align: top;
+  border-top: 1px solid #84cfd3;
+}
+
+table tbody tr:nth-of-type(odd) {
+  background-color: #84cfd3;
+}
+
+.alert-success {
+  position: absolute !important;
+  bottom: 0;
+  width: 50%;
+  right: 15px;
+}
