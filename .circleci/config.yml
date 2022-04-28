@@ -1,0 +1,74 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.2
+  aws-ecr: circleci/aws-ecr@6.15
+
+jobs:
+  build:
+    working_directory: ~/repo/app
+    docker:
+      - image: circleci/node:10.16.3
+    steps:
+      - checkout
+      - run:
+          name: Update NPM
+          command: "sudo npm install -g npm@5"
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install Dependencies
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+      # - run:
+      #     name: Run tests
+      #     command: npm run test
+
+  build-and-test:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          app-dir: ~/project/api/
+      # - run:
+      #     name: Run tests
+      #     command: cd api && pytest
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and push Docker image
+          command: |
+            cd api && docker build -t flask-tutorial:latest .
+workflows:
+  build-and-test-flask-app:
+    jobs:
+      - build-and-test
+      - aws-ecr/build-and-push-image:
+          context: eu-central-1-ecr
+          repo: rollout-manager-api
+          tag: "latest,v0.1.${CIRCLE_BUILD_NUM}"
+          dockerfile: Dockerfile
+          path: ~/project/api/
+          requires:
+            - "build-and-test"
+          extra-build-args:
+            "--build-arg POSTGRES_USER=tom_stage_user --build-arg POSTGRES_PASSWORD=hqD3vEHdhEIFBznsmZVe
+            --build-arg POSTGRES_DB=rollout_manager --build-arg POSTGRES_HOST=tom.ca9ojxjnk2mg.eu-central-1.rds.amazonaws.com"
+
+  build-and-test-svelte-app:
+    jobs:
+      - build
+      - aws-ecr/build-and-push-image:
+          context: eu-central-1-ecr
+          repo: rollout-manager-ui
+          tag: "latest,v0.1.${CIRCLE_BUILD_NUM}"
+          dockerfile: Dockerfile
+          path: ~/project/app/
+          requires:
+            - "build"
+            
