@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  flask-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_ENV=development
+      - POSTGRES_URL=postgresql://postgres:root@db:5432/rollout_manager
+    depends_on:
+      - db
+
+  # app:
+  #   build:
+  #     context: ./app
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 8080:8080
+
+  db:
+    image: postgres:alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
